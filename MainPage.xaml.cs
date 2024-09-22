@@ -1,8 +1,10 @@
 ﻿namespace TicTacToeGame;
 public partial class MainPage : ContentPage
 {
+    Entry playerXEntry, playerOEntry;
     Label label, gameLabel;
     RadioButton rbtnPlayer, rbtnComputer;
+    Button newGameBtn, toMainPageBtn;
     private GameLogic logic;
     private GameRender render;
     private GameBoard board;
@@ -12,13 +14,6 @@ public partial class MainPage : ContentPage
     public MainPage()
     {
         InitializeComponent();
-
-        logic = new GameLogic();
-        board = new GameBoard();
-        render = new GameRender();
-        playerX = new Player("X");
-        playerO = new Player("O");
-
         CreateStartPage();
     }
         
@@ -61,7 +56,30 @@ public partial class MainPage : ContentPage
             VerticalOptions = LayoutOptions.Center
         };
 
-        
+        rbtnPlayer.CheckedChanged += OnModeChanged;
+        rbtnComputer.CheckedChanged += OnModeChanged;
+
+        playerXEntry = new Entry
+        {
+            Placeholder = "Enter Player X Name",
+            FontSize = 24,
+            WidthRequest = 300,
+            HeightRequest = 70,
+            TextColor = Colors.Blue,
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center,
+        };
+        playerOEntry = new Entry
+        {
+            Placeholder = "Enter Player O Name",
+            WidthRequest = 300,
+            HeightRequest = 70,
+            FontSize = 24,
+            TextColor = Colors.Blue,
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center,
+            IsVisible = false,
+        };
 
         Button startButton = new Button()
         {
@@ -76,33 +94,87 @@ public partial class MainPage : ContentPage
             HorizontalOptions = LayoutOptions.Center,
             VerticalOptions = LayoutOptions.End
         };
-
         startButton.Clicked += OnStartGameClicked;
 
         Content = new StackLayout
         {
-            Children = { label, gameLabel, rbtnComputer, rbtnPlayer, startButton }
+            Padding = 10,
+            Spacing = 10,
+            Children = { label, gameLabel, rbtnComputer, rbtnPlayer, playerXEntry, playerOEntry, startButton }
         };
     }
-    private void OnStartGameClicked(object sender, EventArgs e)
+    private void OnModeChanged(object sender, CheckedChangedEventArgs e)
     {
+        playerOEntry.IsVisible = rbtnPlayer.IsChecked;
+    }
+    private void OnStartGameClicked(object? sender, EventArgs e)
+    {
+        string nameX = playerXEntry.Text;
+        string nameO = playerOEntry.Text;
+
+        playerX = new Player("X", nameX);
+
         if (rbtnComputer.IsChecked)
         {
-            logic.GameMode();
+            playerO = new Player("O", "Computer");
         }
         else
         {
-            logic.GameMode();
+            playerO = new Player("O", nameO);
         }
-        board.CreateBoard();
-        logic.StartGame(playerX, playerO);
-        render.RenderBoard(board);
+
+        board = new GameBoard();
+        render = new GameRender(this);
+        logic = new GameLogic(board, render, playerX, playerO);
+
+        logic.ResetGame();
+
+        AddButtons();
+
+        StackLayout layout = new StackLayout
+        {
+            Padding = 10,
+            Spacing = 10,
+            Children = { render.NextPlayerLabel, render.GetBoard(), newGameBtn, toMainPageBtn }
+        };
+        Content = layout;
     }
 
-    private void OnGridTapped(int gridID)
+    private void AddButtons()
     {
-        logic.Move(gridID);
+        newGameBtn = new Button
+        {
+            Text = "New Game",
+            BackgroundColor = Colors.Green,
+            TextColor = Colors.White,
+            FontAttributes = FontAttributes.Bold,
+            HorizontalOptions = LayoutOptions.Center
+        };
+        newGameBtn.Clicked += OnNewGameClicked;
 
+        toMainPageBtn = new Button
+        {
+            Text = "To Main Page",
+            BackgroundColor = Colors.Red,
+            TextColor = Colors.White,
+            FontAttributes = FontAttributes.Bold,
+            HorizontalOptions = LayoutOptions.Center
+        };
+        toMainPageBtn.Clicked += OnToMainPageClicked;
+    }
+
+    private void OnNewGameClicked(object sender, EventArgs e)
+    {
+        logic.ResetGame();
+    }
+
+    private void OnToMainPageClicked(object sender, EventArgs e)
+    {
+        CreateStartPage();
+    }
+    public void OnGridTapped(int row, int col)
+    {
+        logic.MakeMove(row, col);
         render.UpdateBoard(board);
     }
 }
