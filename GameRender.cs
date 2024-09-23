@@ -88,7 +88,6 @@
 
         public void UpdateNextPlayerLabel(string text) 
         {
-
             NextPlayerLabel.Text = text;
         }
 
